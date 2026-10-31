@@ -1,0 +1,8 @@
+name: astrbot_plugin_topic_proficiency
+display_name: 话题熟练度
+desc: 吃娱乐冲浪落下的素材，按接触次数、每次挖多深、最近一次多久以前算话题熟练度，写成 proficiency.json。只认实际看过的素材，不认聊天里听到的词。
+short_desc: 只算她真看过的东西，熟不熟一目了然
+version: 1.0.0
+author: local
+support_platforms:
+  - aiocqhttp

@@ -1,0 +1,8 @@
+name: astrbot_plugin_qq_profile
+display_name: QQ 资料与空间
+desc: 让机器人通过 NapCat 修改自己的个性签名/昵称，以及发布、删除 QQ 空间说说。仅管理员可用。
+short_desc: 改签名与发说说
+version: 1.0.0
+author: local
+support_platforms:
+  - aiocqhttp

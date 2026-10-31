@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "private_gap_seconds": 4.0,
+  "group_gap_seconds": 3.0,
+  "jitter_seconds": 1.5,
+  "max_wait_seconds": 30,
+  "admin_exempt": true
+}

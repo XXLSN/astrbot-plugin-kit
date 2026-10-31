@@ -1,0 +1,8 @@
+name: astrbot_plugin_usage_cost
+display_name: 用量花费统计
+desc: 按天汇总机器人自己的 token 用量，并按 DeepSeek 官方单价估算花费（区分高峰/空闲与缓存命中）。仅管理员可用。
+short_desc: 查询每天花了多少钱
+version: 1.0.0
+author: local
+support_platforms:
+  - aiocqhttp

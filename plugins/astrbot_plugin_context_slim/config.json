@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "keep_recent_images": 1,
+  "clear_historical_think": true,
+  "keep_recent_tool_results": 5,
+  "tool_result_max_chars": 100,
+  "compact_historical_reminders": true,
+  "keep_recent_group_context_blocks": 2,
+  "trim_quantum": 4,
+  "block_trim_quantum": 3,
+  "cron_backlog_keep_messages": 40,
+  "cron_cold_keep_messages": 80,
+  "diagnose": true,
+  "verbose": false
+}

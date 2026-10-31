@@ -1,0 +1,8 @@
+name: astrbot_plugin_reply_pacing
+display_name: 回复节奏
+desc: 同一个人连着问好几件事时，把她的回复按会话限速，几条消息之间留出几秒，避免一口气刷屏。
+short_desc: 私聊/群聊连续回复之间留间隔
+version: 1.0.0
+author: local
+support_platforms:
+  - aiocqhttp

@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# 运行时数据（插件自己生成，绝不入库）
+data/
+msgs/
+surf_corpus/
+*.db
+*.sqlite
+*.sqlite3
+*.jsonl
+*.log
+diary.json
+memories.json
+key_facts.json
+prefs.json
+state.json
+ledger.json
+proficiency.json
+sources.jsonl
+events.jsonl
+score_log.jsonl
+decisions.jsonl
+knowledge.jsonl
+cmd_config.json
+
+# 备份与发布物
+dist/
+*.bak
+*.bak-*
+*.zip
+*.7z
+*.tar.gz
+core-patch-backup-*/
+
+# 本机配置 / 密钥
+.env
+.env.*
+*.local
+private_strings*.txt
+config.local.json
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

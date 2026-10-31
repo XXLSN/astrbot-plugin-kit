@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "corpus_dir": "",
+  "cards_dir": "",
+  "data_dir": "",
+  "prefs_path": "",
+  "knowledge_path": "",
+  "knowledge_index": "",
+  "kb_name": "",
+  "knowledge_backend": "local",
+  "kb_ingest_enabled": true,
+  "kb_ingest_batch": 10,
+  "poll_interval_seconds": 300,
+  "startup_delay_seconds": 120,
+  "recency_half_life_days": 30,
+  "depth_budget": 3.0,
+  "breadth_scale": 6.0,
+  "min_sources_for_full": 2,
+  "full_cap_below_min": 40.0,
+  "topic_aliases": {}
+}

@@ -1,0 +1,8 @@
+name: astrbot_plugin_context_slim
+display_name: 上下文瘦身
+desc: 发送前清理历史里的旧图片、思考链、超长工具结果、重复时间提醒和群聊快照，降低每次请求的 token。
+short_desc: 压缩每次请求携带的历史包袱
+version: 1.0.0
+author: local
+support_platforms:
+  - aiocqhttp

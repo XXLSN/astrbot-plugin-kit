@@ -1,0 +1,8 @@
+name: astrbot_plugin_self_memory
+display_name: 自主记忆
+desc: 让机器人自己管理记忆：清空当前聊天上下文、长期记住重要的事、按需忘记。仅管理员可用。
+short_desc: 机器人自主管理短期与长期记忆
+version: 1.1.1
+author: local
+support_platforms:
+  - aiocqhttp

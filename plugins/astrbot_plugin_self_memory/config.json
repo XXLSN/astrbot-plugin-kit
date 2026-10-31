@@ -1,0 +1,20 @@
+{
+  "data_dir": "",
+  "max_notes": 2000,
+  "max_note_len": 400,
+  "pinned_char_budget": 600,
+  "auto_recall_enabled": true,
+  "auto_recall_max": 3,
+  "auto_recall_char_budget": 900,
+  "auto_recall_min_score": 2,
+  "diary_recall_min_score": 4,
+  "recall_max_results": 5,
+  "recall_char_budget": 1200,
+  "history_search_max_results": 5,
+  "history_search_char_budget": 1200,
+  "history_search_snippet_len": 240,
+  "history_search_min_score": 2,
+  "history_search_scan_limit": 2000,
+  "diary_path": "",
+  "key_facts_path": ""
+}

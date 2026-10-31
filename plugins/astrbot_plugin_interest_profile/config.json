@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "provider_id": "",
+  "timezone": "Asia/Shanghai",
+  "diary_path": "",
+  "proficiency_path": "",
+  "poll_interval_seconds": 60,
+  "startup_delay_seconds": 90,
+  "max_entries_per_tick": 3,
+  "half_life_days": 45,
+  "profile_top_n": 24,
+  "profile_max_chars": 200,
+  "hysteresis": 3.0,
+  "dry_run": true
+}

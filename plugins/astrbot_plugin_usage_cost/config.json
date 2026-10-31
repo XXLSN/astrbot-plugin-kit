@@ -1,0 +1,23 @@
+{
+  "enabled": true,
+  "timezone": "Asia/Shanghai",
+  "currency_symbol": "¥",
+  "prices": {
+    "deepseek-flash": {
+      "input": 1.0,
+      "cached_input": 0.02,
+      "output": 4.0,
+      "peak_input": 2.0,
+      "peak_cached_input": 0.04,
+      "peak_output": 8.0
+    }
+  },
+  "fallback": {
+    "input": 1.0,
+    "cached_input": 0.02,
+    "output": 4.0
+  },
+  "peak_hours": "9-12,14-18",
+  "peak_weekdays": "mon-fri",
+  "holidays": []
+}

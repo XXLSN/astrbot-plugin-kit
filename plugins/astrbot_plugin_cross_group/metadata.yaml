@@ -1,0 +1,8 @@
+name: astrbot_plugin_cross_group
+display_name: 跨群助手
+desc: 允许管理员在私聊中列出群、读取指定群历史、向指定群发消息，并支持群别名。
+short_desc: 跨群读取历史与发消息
+version: 1.0.0
+author: local
+support_platforms:
+  - aiocqhttp

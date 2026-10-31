@@ -1,0 +1,53 @@
+{
+  "name": "astrbot-core-patches",
+  "source_astrbot_version": "4.29.3",
+  "generated_at": "2026-10-31",
+  "apply_script": "tools/apply_core_patches.py",
+  "files": [
+    {
+      "path": "backend/app/astrbot/builtin_stars/astrbot/main.py",
+      "sha256": "1f6dfa0b50353156c0023468d29c6a9a967554e88161f9a3e67ad88801ab5bba",
+      "bytes": 16725
+    },
+    {
+      "path": "backend/app/astrbot/core/config/default.py",
+      "sha256": "3d41f94f18a966b39e125351ccff2db31e2a459db0534fa0d415d46f2def3681",
+      "bytes": 251177
+    },
+    {
+      "path": "backend/app/astrbot/core/cron/manager.py",
+      "sha256": "2957a68cbe3a313f1aafefdcbcdd8902992c359e2874ca8d3d9304abd13037da",
+      "bytes": 26635
+    },
+    {
+      "path": "backend/app/astrbot/core/pipeline/result_decorate/stage.py",
+      "sha256": "2d3488a05b24379fce31c1e33c39f788274891a8f009a9a92039d996520c01d7",
+      "bytes": 20611
+    },
+    {
+      "path": "backend/app/astrbot/core/platform/sources/aiocqhttp/aiocqhttp_platform_adapter.py",
+      "sha256": "f985fc6a5549fcf28fef5b2eebd2908519999edee5e0a415a92bf6f6fb704267",
+      "bytes": 37939
+    },
+    {
+      "path": "backend/app/astrbot/core/tools/cron_tools.py",
+      "sha256": "c421f4734ac9be162ee418948d5aa19ea21cd55b94fdfd7e2f2d213fbcd2a13c",
+      "bytes": 17350
+    },
+    {
+      "path": "backend/app/astrbot/core/tools/message_tools.py",
+      "sha256": "3d1967cf60704d3da2d2b8b42ec809f363ba03f8cf964555cc135c563ebc11a3",
+      "bytes": 29769
+    },
+    {
+      "path": "backend/app/astrbot/core/utils/quoted_message/chain_parser.py",
+      "sha256": "cc3be2d5dbe2174d2fcd337a5df713fa8cd15368554fe4a0eb5e451d82e1cccc",
+      "bytes": 16731
+    },
+    {
+      "path": "backend/app/astrbot/core/utils/qq_face.py",
+      "sha256": "2e829454d2560b40ad42367299779e83da1bde0d8dd2c7dfd7ed923b8347a172",
+      "bytes": 8950
+    }
+  ]
+}
