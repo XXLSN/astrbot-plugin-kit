@@ -23,7 +23,7 @@
 | `astrbot_plugin_cross_group` | 跨群助手：管理员私聊里读群历史、往指定群发消息 | 可选 |
 | `astrbot_plugin_qq_profile` | QQ 资料：改签名/昵称、发/删空间说说（需要 NapCat） | 可选 |
 
-依赖关系见 `docs/依赖关系.md`。
+依赖关系见 `docs/依赖关系.md`。不知道怎么选、哪些插件搭配效果更好，看 [`docs/插件简介与搭配推荐.md`](docs/插件简介与搭配推荐.md)。
 
 **知识检索默认走「非向量数据库路线」**：只读 `persona_growth` 生成的 `knowledge.jsonl`，不需要 embedding provider、Ollama 或 WebUI 知识库。要改回向量库，见 `部署文档.md` 第 6.3.1 节。
 
@@ -198,6 +198,7 @@ astrbot-plugin-kit/
 |---|---|
 | 怎么一步步装、怎么验收 | `部署文档.md` |
 | 每个插件具体做什么 | `docs/插件说明.md` |
+| 插件怎么用、哪些搭配更好 | `docs/插件简介与搭配推荐.md` |
 | 某个配置项什么意思 | `docs/配置说明.md` |
 | 哪些插件可以不要 | `docs/依赖关系.md` |
 | 本体补丁是什么、怎么装、怎么回滚 | `core-patches/使用说明.md` |
