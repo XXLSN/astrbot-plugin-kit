@@ -61,17 +61,7 @@
 
 ---
 
-## 三、不包含的内容（故意）
-
-- 原作者的 `diary.json`、`memories.json`、`prefs.json`、`state.json`、`knowledge.jsonl`、`surf_corpus/`、`msgs/`、`ledger.json`、`decisions.jsonl`
-- 原作者的 QQ 号、群号、管理员 ID、机器人昵称
-- 原作者的 `data_v4.db`、日志、备份
-- 插件目录里的 `cmd_config.json`（它包含 AstrBot 全局配置和密码哈希）
-- 第三方插件 `astrbot_plugin_qzone`（作者 Zhalslar，不是这套代码）
-
----
-
-## 四、前置条件
+## 三、前置条件
 
 1. **AstrBot**：本包在 **v4.29.3 桌面版**上开发和验证。建议 v4.29.x 或更新。
 2. **消息平台**：`aiocqhttp`（NapCat / OneBot v11）。所有插件都只声明支持 `aiocqhttp`。
@@ -83,7 +73,7 @@
 
 ---
 
-## 五、三步安装
+## 四、三步安装
 
 先关掉 AstrBot（或至少不要在安装时重载插件），然后：
 
@@ -111,7 +101,7 @@ python tools/verify.py
 
 ---
 
-## 六、AstrBot 本体补丁（可选）
+## 五、AstrBot 本体补丁（可选）
 
 包里额外带了 9 个对 AstrBot 本体（`backend/app/astrbot/...`）的修改，放在 `core-patches/`。**插件不装这些也能跑**，装了的收益是：
 
@@ -141,7 +131,7 @@ python tools/apply_core_patches.py --astrbot-home "<AstrBot安装目录>" --rest
 
 ---
 
-## 七、目录结构
+## 六、目录结构
 
 ```
 astrbot-plugin-kit/
@@ -168,7 +158,7 @@ astrbot-plugin-kit/
 
 ---
 
-## 八、默认安全策略
+## 七、默认安全策略
 
 安装器生成的配置默认是「保守模式」：
 
@@ -182,7 +172,7 @@ astrbot-plugin-kit/
 
 ---
 
-## 九、升级 / 卸载
+## 八、升级 / 卸载
 
 - **升级**：用新包覆盖 `plugins/` 下对应目录，保留 `config.json` 和 `plugin_data/`。安装器默认不覆盖已存在目录；要覆盖加 `--force`（会删掉该插件目录，`plugin_data` 不受影响）。
 - **卸载**：删除 `plugins/astrbot_plugin_*` 对应目录；`plugin_data/` 里的数据想留就留，想清就清。
@@ -190,7 +180,7 @@ astrbot-plugin-kit/
 
 ---
 
-## 十、文档索引
+## 九、文档索引
 
 | 想知道什么 | 看哪里 |
 |---|---|
@@ -204,7 +194,7 @@ astrbot-plugin-kit/
 
 ---
 
-## 十一、许可证与出处
+## 十、许可证与出处
 
 本包以 **GNU AGPL-3.0** 发布，完整文本见 `LICENSE`。
 
