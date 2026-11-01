@@ -1585,6 +1585,23 @@ class Main(star.Star):
 
     # ---------- 群聊守望窗口（她说完话后盯着谁接话） ----------
 
+    def _watch_lock(self, gid: str) -> asyncio.Lock:
+        """同一批群消息会被 AstrBot 并发派发，而判定要走一次模型。
+
+        检查和占位之间隔着 1~2 秒的 await，第二条消息能在这个空窗里
+        同样通过检查，于是同一个话题被建两个任务、回两遍。按群串行化，
+        并在拿到锁之后复查一次，保证一次只建一个守望任务。
+        """
+        locks = getattr(self, "_watch_locks", None)
+        if locks is None:
+            locks = {}
+            self._watch_locks = locks
+        lock = locks.get(gid)
+        if lock is None:
+            lock = asyncio.Lock()
+            locks[gid] = lock
+        return lock
+
     def _watch_state(self) -> dict[str, Any]:
         state = self.state.get("group_watch")
         if not isinstance(state, dict):
@@ -7812,57 +7829,65 @@ class Main(star.Star):
         if platform is None or not self._platform_ready(platform):
             return
 
-        try:
-            sender = str(event.get_sender_name() or "")
-        except Exception:  # noqa: BLE001
-            sender = ""
-        group = {"id": gid, "name": self._group_names.get(gid, gid)}
-        digest = await self._recent_group_digest(platform, gid)
-        if (
-            not matched
-            and self.cfg.get("group_watch_thread_guard", True)
-            and self._message_belongs_to_other_thread(
-                gid, self._event_text(event), str(event.get_sender_id() or "")
+        # 判定要 await 一次模型，这 1~2 秒里同批的第二条消息也会走完上面的检查。
+        # 按群串行 + 拿到锁后复查，保证一次只建一个任务。
+        async with self._watch_lock(gid):
+            if not self._watch_can_judge(gid, datetime.now(timezone.utc)):
+                logger.info("群聊守望：同批消息已建过任务，跳过（群 %s）", gid)
+                return
+            try:
+                sender = str(event.get_sender_name() or "")
+            except Exception:  # noqa: BLE001
+                sender = ""
+            group = {"id": gid, "name": self._group_names.get(gid, gid)}
+            digest = await self._recent_group_digest(platform, gid)
+            if (
+                not matched
+                and self.cfg.get("group_watch_thread_guard", True)
+                and self._message_belongs_to_other_thread(
+                    gid, self._event_text(event), str(event.get_sender_id() or "")
+                )
+            ):
+                # 群里同时开着别的线（两组海龟汤那种），这句是接那条线的，
+                # 她根本不在那条线里，本地就可以判定不用接。
+                logger.debug("群聊守望：别的话题线在聊，跳过（群 %s）", gid)
+                self._log_decision(gid, "watch", "no", "别的话题线在聊")
+                return
+            # 规则都说不清（没 @ 任何人、没提她、也没别的线在聊）：问一次判定层。
+            allowed, why, judge_meta = await self._judge_should_speak_ex(
+                platform,
+                gid,
+                trigger="watch",
+                candidate=f"{sender}：{self._event_text(event)}",
+                digest=digest,
             )
-        ):
-            # 群里同时开着别的线（两组海龟汤那种），这句是接那条线的，
-            # 她根本不在那条线里，本地就可以判定不用接。
-            logger.debug("群聊守望：别的话题线在聊，跳过（群 %s）", gid)
-            self._log_decision(gid, "watch", "no", "别的话题线在聊")
-            return
-        # 规则都说不清（没 @ 任何人、没提她、也没别的线在聊）：问一次判定层。
-        allowed, why, judge_meta = await self._judge_should_speak_ex(
-            platform,
-            gid,
-            trigger="watch",
-            candidate=f"{sender}：{self._event_text(event)}",
-            digest=digest,
-        )
-        if not allowed:
-            logger.info("群聊守望：判定层说不该插话，跳过（群 %s）", gid)
-            self._log_decision(gid, "watch", "no", why)
-            return
-        self._mark_watch_job(gid, now)
-        event.set_extra("_gp_claimed", "watch")
-        note = self._build_group_watch_note(
-            group,
-            now_local,
-            self._event_text(event),
-            sender,
-            digest=digest,
-            extra=self._stage2_block(judge_meta),
-        )
-        delay = self._cfg_int("group_watch_delay_seconds", 20, 3, 600)
-        await self._create_job(
-            platform,
-            group,
-            now,
-            note=note,
-            mode="watch",
-            delay_seconds=delay,
-            addressed=self._text_at_bot(event) or self._message_targets_bot(event),
-            judge_meta=judge_meta,
-        )
+            if not allowed:
+                logger.info("群聊守望：判定层说不该插话，跳过（群 %s）", gid)
+                self._log_decision(gid, "watch", "no", why)
+                return
+            self._mark_watch_job(gid, now)
+            event.set_extra("_gp_claimed", "watch")
+            note = self._build_group_watch_note(
+                group,
+                now_local,
+                self._event_text(event),
+                sender,
+                digest=digest,
+                extra=self._stage2_block(judge_meta),
+            )
+            delay = self._cfg_int("group_watch_delay_seconds", 20, 3, 600)
+            await self._create_job(
+                platform,
+                group,
+                now,
+                note=note,
+                mode="watch",
+                delay_seconds=delay,
+                addressed=(
+                    self._text_at_bot(event) or self._message_targets_bot(event)
+                ),
+                judge_meta=judge_meta,
+            )
 
     @filter.on_decorating_result()
     async def render_qq_faces(self, event: AstrMessageEvent) -> None:
