@@ -7180,9 +7180,11 @@ class Main(star.Star):
                 ).strip()
                 uids.add(uid)
                 names[uid] = name or uid
-            if not uids and getattr(self, "_friend_uids", set()):
-                # 接口偶发返回空列表：保留旧名单，别把所有人一次剔光。
-                logger.warning("好友主动聊天：好友列表返回空，保留旧名单")
+            if not uids:
+                # 接口偶发返回空列表。不能把它当成「一个好友都没有」——
+                # 初次加载时那样会让所有私聊都被当成陌生人挡掉，
+                # 连真好友都哑巴。保持未加载状态，30 分钟后再试。
+                logger.warning("好友主动聊天：好友列表返回空，暂不更新名单")
                 self._friend_roster_next_try = now_ts + 30 * 60
                 return True
             old_uids = getattr(self, "_friend_uids", set())
