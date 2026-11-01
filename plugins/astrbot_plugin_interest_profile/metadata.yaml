@@ -1,6 +1,6 @@
 name: astrbot_plugin_interest_profile
 display_name: 兴趣偏好
-desc: 从娱乐冲浪日记里抽出她实际接触到的东西，先由整理员转录原文，再让糯糯本人按人设打分；分数本地计算，写成 prefs.json 给群聊判定层用。学说话和聊天日记都不参与。
+desc: 从娱乐冲浪日记里抽出她实际接触到的东西，先由整理员转录原文，再让bot名称本人按人设打分；分数本地计算，写成 prefs.json 给群聊判定层用。学说话和聊天日记都不参与。
 short_desc: 娱乐冲浪后自己记下喜欢/讨厌什么，供群聊判定用
 version: 1.0.0
 author: local

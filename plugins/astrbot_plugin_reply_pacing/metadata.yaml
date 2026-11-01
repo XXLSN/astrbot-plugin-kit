@@ -1,8 +1,8 @@
 name: astrbot_plugin_reply_pacing
 display_name: 回复节奏
-desc: 同一个人连着问好几件事时，把她的回复按会话限速，几条消息之间留出几秒，避免一口气刷屏。
-short_desc: 私聊/群聊连续回复之间留间隔
-version: 1.0.0
+desc: 回复前按最近消息密度等待：别人发得勤就多等一会儿，冷下来自动回到基础延迟；对方连着秒回时按 30/90/300 秒上台阶；连发合并成一次，主动任务与被动回复共用同一套延迟。
+short_desc: 按消息密度 + 连续秒回阶梯延迟 + 连发合并
+version: 3.1.0
 author: local
 support_platforms:
   - aiocqhttp

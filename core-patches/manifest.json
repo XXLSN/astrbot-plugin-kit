@@ -1,7 +1,7 @@
 {
   "name": "astrbot-core-patches",
   "source_astrbot_version": "4.29.3",
-  "generated_at": "2026-10-31",
+  "generated_at": "2026-11-01",
   "apply_script": "tools/apply_core_patches.py",
   "files": [
     {

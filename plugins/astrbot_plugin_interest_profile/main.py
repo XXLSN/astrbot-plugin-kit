@@ -1,8 +1,8 @@
-"""兴趣偏好总结：从娱乐冲浪日记里抽出「她接触了什么」，再让糯糯本人打分。
+"""兴趣偏好总结：从娱乐冲浪日记里抽出「她接触了什么」，再让bot名称本人打分。
 
 两道模型调用，职责分开：
 - 调用 A：整理员（无人设），只从日记原文里转录 topic + 原文出处，不产出态度。
-- 调用 B：糯糯本人（完整人设），给 A 抽出来的每一项打分。
+- 调用 B：bot名称本人（完整人设），给 A 抽出来的每一项打分。
 
 分数是本地按固定公式算的，模型只给「这次多喜欢/多讨厌」的强度，
 所以同一批事件任何时候重算结果都一样。
@@ -72,7 +72,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "dry_run": False,
 }
 
-SUMMARY_SYSTEM = """你是整理员，不是糯糯。下面是一篇日记原文。
+SUMMARY_SYSTEM = """你是整理员，不是bot名称。下面是一篇日记原文。
 只做转录：找出这篇日记里她**实际接触到的具体东西**（作品、游戏、话题、活动、食物、动物等）。
 每一项给出：
 - topic: 短名词，2-6 个字，尽量用日记里的说法
@@ -168,7 +168,7 @@ def _tier_with_hysteresis(pref: float, prev: str | None, margin: float) -> str:
 
 
 class Main(star.Star):
-    """把娱乐冲浪日记里的兴趣抽出来，让糯糯自己打分，写成 prefs.json。"""
+    """把娱乐冲浪日记里的兴趣抽出来，让bot名称自己打分，写成 prefs.json。"""
 
     def __init__(self, context: star.Context) -> None:
         super().__init__(context)
@@ -282,7 +282,7 @@ class Main(star.Star):
         if scored is None:
             return False
         if not scored:
-            logger.info("[interest_profile] 糯糯这次没给分：%s", text[:40])
+            logger.info("[interest_profile] bot名称这次没给分：%s", text[:40])
             return True
 
         at = str(entry.get("at") or "")
@@ -348,7 +348,7 @@ class Main(star.Star):
             )
         return out[:6]
 
-    # ---------- 调用 B：糯糯打分 ----------
+    # ---------- 调用 B：bot名称打分 ----------
 
     async def _score(
         self, provider, text: str, topics: list[dict[str, str]]

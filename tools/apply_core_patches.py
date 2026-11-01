@@ -6,13 +6,13 @@
 
 用法：
     # 1. 先看会改哪些文件
-    python tools/apply_core_patches.py --astrbot-home "C:/Users/me/AppData/Local/AstrBot" --dry-run
+    python tools/apply_core_patches.py --astrbot-home "<你的数据目录>" --dry-run
 
     # 2. 停掉 AstrBot 后正式应用（会自动备份原文件）
-    python tools/apply_core_patches.py --astrbot-home "C:/Users/me/AppData/Local/AstrBot"
+    python tools/apply_core_patches.py --astrbot-home "<你的数据目录>"
 
     # 3. 出问题就恢复（把 <备份目录> 换成脚本打印出来的那个）
-    python tools/apply_core_patches.py --astrbot-home "C:/Users/me/AppData/Local/AstrBot" --restore "<备份目录>"
+    python tools/apply_core_patches.py --astrbot-home "<你的数据目录>" --restore "<备份目录>"
 """
 
 from __future__ import annotations

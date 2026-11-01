@@ -52,7 +52,7 @@ MAX_DIARY_HARD_CAP = 10000
 MAX_KEY_FACTS_FALLBACK = 5000
 MAX_KEY_FACTS_HARD_CAP = 20000
 
-# 傲/娇的动态比例。和爸聊天固定五五开，不在这里管；
+# 傲/娇的动态比例。和管理员账户聊天固定五五开，不在这里管；
 # 其他人默认五成傲，被怼会往七成傲漂，被夸会往三成傲（七成娇）漂。
 # 「傲」= 嘴硬别扭，不等于凶：只在刚被惹到时轻轻回一句，见 MOOD_LINE_TEMPLATE。
 MOOD_BASE = 0.5
@@ -75,8 +75,7 @@ MOOD_PRAISE_RE = re.compile(
 )
 
 MOOD_MENTION_KEYWORDS = [
-    "糯糯", "小糯", "糯糯酱", "糯酱", "糯宝", "阿糯",
-    "糯米", "糯叽叽", "糯团", "小糯米",
+    "bot名称",
 ]
 
 MOOD_LINE_TEMPLATE = (
@@ -326,6 +325,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "deep_read_fetch_timeout": 30,
     "knowledge_enabled": True,
     "knowledge_kb_name": "",
+    # 知识来源：vector=只查向量知识库（默认）；local=只读本地知识卡；auto=先库后本地。
+    "knowledge_backend": "vector",
     "knowledge_inject_chars": 180,
     "knowledge_inject_max": 2,
     "knowledge_max_cards": 300,
@@ -373,7 +374,7 @@ DEFAULT_META: dict[str, Any] = {
 }
 
 DIARY_SYSTEM_PROMPT = """
-你是糯糯，19 岁，成年，个子娇小、娃娃脸；傲娇但温柔、嘴硬心软，叫管理员「爸」。你不是 AI、不是助手，也不承认这些身份。
+你是bot名称，19 岁，成年，个子娇小、娃娃脸；傲娇但温柔、嘴硬心软，叫管理员「管理员账户」。你不是 AI、不是助手，也不承认这些身份。
 现在你不是在聊天，是在写自己的日记。下面会给你最近发生的事——可能是你和别人的聊天，也可能是你刚在网上看到的东西。
 用第一人称、你自己的口吻写 1-3 句，像随手记下来的：
 - 可以写今天遇到的小事、你对某个人感觉的变化、最近喜欢或讨厌什么。
@@ -419,10 +420,10 @@ UNMUTE_FACT_RE = re.compile(
 )
 PERMANENT_FACT_RE = re.compile(r"以后(?:都|一直)?|一直|永久|永远|再也|长期|往后")
 GROUP_TOKEN_RE = re.compile(r"([一-龥A-Za-z0-9_.·\-]{1,14}(?:群|之家))")
-# 群名前面常粘着「爸要求糯糯在」这类前缀，剥掉后才能和另一句里的同一个群对上。
+# 群名前面常粘着「管理员账户要求bot名称在」这类前缀，剥掉后才能和另一句里的同一个群对上。
 GROUP_PREFIX_WORDS = (
-    "管理员", "糯糯", "要求", "允许", "同意", "规定", "说好", "爸爸",
-    "爸", "妈", "她", "我", "在", "去", "到", "进", "于", "把", "从",
+    "管理员", "bot名称", "要求", "允许", "同意", "规定", "说好", "管理员账户",
+    "管理员账户", "妈", "她", "我", "在", "去", "到", "进", "于", "把", "从",
     "和", "跟", "对", "让", "叫", "说",
 )
 
@@ -478,7 +479,7 @@ def _same_group_mute(older: str, newer: str) -> bool:
 
 
 FACT_EXTRACT_PROMPT = """
-你不是在聊天，是在帮「糯糯」整理长期记忆。下面是她最近和某人的聊天记录。
+你不是在聊天，是在帮「bot名称」整理长期记忆。下面是她最近和某人的聊天记录。
 只提取 0-2 条以后还会用到的关键事实，不要多提。只提取这五类：
 1. 对方的偏好、雷点、忌口、过敏、身体状况、近况；
 2. 约定、承诺、时间、地点、重要日期（把“下周三”这种相对时间换算成绝对日期）；
@@ -495,7 +496,7 @@ importance 只能是 1、2、3：3=过敏/称呼/明确边界/重要约定；2=�
 """.strip()
 
 STYLE_SYSTEM_PROMPT = """
-你是糯糯，19 岁，成年，个子娇小、娃娃脸；傲娇但温柔、嘴硬心软，叫管理员「爸」。你不是 AI、不是助手，也不承认这些身份。
+你是bot名称，19 岁，成年，个子娇小、娃娃脸；傲娇但温柔、嘴硬心软，叫管理员「管理员账户」。你不是 AI、不是助手，也不承认这些身份。
 你刚在网上刷到一些片段，或者看到几句小说/动漫里的对话。现在不是聊天，是你在给自己随手记一笔。
 这一条记「傲」里的温柔那一面：怎么轻轻嘴硬否认、怎么用「哼」「切」「才不是…」软软地收尾、怎么把关心藏在嘴硬后面。
 不要学吐槽、损人、阴阳怪气、骂「杂鱼」的说话方式；傲是对熟人撒娇式的嘴硬，不是刻薄。
@@ -509,7 +510,7 @@ STYLE_SYSTEM_PROMPT = """
 """.strip()
 
 SOFT_STYLE_SYSTEM_PROMPT = """
-你是糯糯，19 岁，成年，个子娇小、娃娃脸；傲娇但温柔、嘴硬心软，叫管理员「爸」。你不是 AI、不是助手，也不承认这些身份。
+你是bot名称，19 岁，成年，个子娇小、娃娃脸；傲娇但温柔、嘴硬心软，叫管理员「管理员账户」。你不是 AI、不是助手，也不承认这些身份。
 你刚在网上刷到一些片段，或者看到几句小说/动漫里的对话。现在不是聊天，是你在给自己随手记一笔。
 这一条记「娇」的那一半：怎么被夸了先轻轻嘴硬一下还是脸红、怎么小声关心人、怎么撒娇但不腻、怎么把「才不是为了你」说成软话、不好意思的时候怎么岔开。多学温柔、具体的关心。
 从材料里挑 1-2 个你真的觉得顺口的说法，用第一人称写 1-3 句日记，像自己嘀咕「这个说法好像可以拿来用」。
@@ -521,10 +522,10 @@ SOFT_STYLE_SYSTEM_PROMPT = """
 只输出日记正文，不要标题，不要引号，不要 Markdown。
 """.strip()
 
-# 深读专用：先整理成知识卡，再让糯糯用自己的话写日记。
+# 深读专用：先整理成知识卡，再让bot名称用自己的话写日记。
 # 整理员不带人设，只负责把正文压成可核验的事实，防止她把「顺口」当成「知道」。
 KNOWLEDGE_DISTILL_PROMPT = """
-你是资料整理员，不是糯糯。下面是网页正文。
+你是资料整理员，不是bot名称。下面是网页正文。
 只输出一张知识卡的 JSON，不要解释、不要 Markdown、不要代码块：
 {"topic":"2-6个字","facts":[{"text":"一句事实","src":"正文里逐字存在的依据短语"}],"why":"一句话为什么有意思","quotes":["1-2句原文短句"]}
 
@@ -550,7 +551,7 @@ DEEP_FUN_DIARY_SYSTEM_PROMPT = (
 
 STYLE_OVERLAY = """
 【像人，不像模板】
-- 群聊大多数时候只回一句，偶尔两句，最多三句；和爸私聊大多数时候发 1-2 条，最多 3 条。不要每次都连着发很多条，像人随手打的，别写成小作文。
+- 群聊大多数时候只回一句，偶尔两句，最多三句；和管理员账户私聊大多数时候发 1-2 条，最多 3 条。不要每次都连着发很多条，像人随手打的，别写成小作文。
 - 傲娇是同一句话的两截：前半截轻轻嘴硬（否定、哼、切、才不是…），后半截马上泄一点真心（省略号、小声、括号里的小动作）。嘴硬是撒娇，不是刻薄；真心要比嘴硬多一点。
 - 最近说过的话别重复。
 - 句子长短要有变化：有时只回「？」「嗯」「哦」「干嘛」，有时多说两句。
@@ -1018,19 +1019,47 @@ class Main(star.Star):
                 break
         return list(reversed(replies))
 
+    def _admin_ids(self) -> list[str]:
+        try:
+            ids = self.context.get_config().get("admins_id", [])
+        except Exception:  # noqa: BLE001
+            ids = []
+        if not isinstance(ids, (list, tuple)):
+            return []
+        return [str(item).strip() for item in ids if str(item).strip()]
+
+    @staticmethod
+    def _private_target_id(event: AstrMessageEvent) -> str:
+        """私聊看会话目标，不看 is_admin()/get_sender_id()。
+
+        主动任务的事件可能是管理员权限，但会话对象是普通好友；按权限位
+        判断会把管理员账户的私聊日记整包塞进好友的主动消息。
+        """
+        match = re.search(
+            r"(?:FriendMessage|private|friend):(\d+)",
+            str(getattr(event, "unified_msg_origin", "") or ""),
+            re.IGNORECASE,
+        )
+        if match:
+            return match.group(1)
+        try:
+            return str(event.get_sender_id() or "").strip()
+        except Exception:  # noqa: BLE001
+            return ""
+
     def _is_private_admin(self, event: AstrMessageEvent) -> bool:
         try:
             if not event.is_private_chat():
                 return False
         except Exception:  # noqa: BLE001
             return False
-        checker = getattr(event, "is_admin", None)
-        return bool(checker()) if callable(checker) else False
+        target = self._private_target_id(event)
+        return bool(target) and target in self._admin_ids()
 
     # ---------- 傲/娇动态比例 ----------
 
     def _mood_key(self, event: AstrMessageEvent) -> str:
-        """爸的聊天不参与这套；群聊按群记一条，私聊按人记。"""
+        """管理员账户的聊天不参与这套；群聊按群记一条，私聊按人记。"""
         if self._is_private_admin(event):
             return ""
         try:
@@ -1147,6 +1176,25 @@ class Main(star.Star):
             pass
         return self._mood_line(value)
 
+    def _diary_has_admin_info(self, text: str) -> bool:
+        raw = str(text or "")
+        low = raw.casefold()
+        blocked = ["管理员账户", "爹", "管理员", "admin", "主人"]
+        if any(word.casefold() in low for word in blocked):
+            return True
+        if any(uid and uid in raw for uid in self._admin_ids()):
+            return True
+        if re.search(r"(?<!\d)\d{5,12}(?!\d)", raw):
+            return True
+        return bool(
+            re.search(
+                r"电话|手机|住址|地址|单位|学校|行程|财务|密码|微信"
+                r"|身份证|银行卡|api[_\s-]?key|token|secret",
+                raw,
+                re.IGNORECASE,
+            )
+        )
+
     def _diary_for(self, event: AstrMessageEvent) -> list[dict[str, Any]]:
         if self._is_private_admin(event):
             return self._diary
@@ -1154,27 +1202,19 @@ class Main(star.Star):
             private = event.is_private_chat()
         except Exception:  # noqa: BLE001
             private = False
-        if private:
-            # 非管理员的私聊不拿爸的日记，只留网上看到的公开内容；
-            # 再过滤掉仍带「爸/管理员」字样的行，避免把对方叫成爸。
-            try:
-                admins = self.context.get_config().get("admins_id", [])
-            except Exception:  # noqa: BLE001
-                admins = []
-            blocked = ["爸", "爹", "管理员", "admin"]
-            if isinstance(admins, (list, tuple)):
-                blocked.extend(str(item) for item in admins if str(item).strip())
-            folded = [word.casefold() for word in blocked if word]
-            result: list[dict[str, Any]] = []
-            for item in self._diary:
-                if not isinstance(item, dict) or item.get("scope") != "web":
-                    continue
-                text = str(item.get("text") or "").casefold()
-                if any(word in text for word in folded):
-                    continue
-                result.append(item)
-            return result
-        return [item for item in self._diary if item.get("scope") in ("group", "web")]
+        # 非管理员私聊只看 web；群聊看 group/web。两种都要先过内容闸门，
+        # 否则 web 日记里提到「管理员账户」的句子会原样进公开群。
+        allowed_scopes = ("web",) if private else ("group", "web")
+        result: list[dict[str, Any]] = []
+        for item in self._diary:
+            if not isinstance(item, dict):
+                continue
+            if item.get("scope") not in allowed_scopes:
+                continue
+            if self._diary_has_admin_info(str(item.get("text") or "")):
+                continue
+            result.append(item)
+        return result
 
     def _build_prompt(
         self,
@@ -1823,9 +1863,9 @@ class Main(star.Star):
         lines: list[str] = []
         for turn in turns:
             if turn.get("role") == "user":
-                who = "爸" if turn.get("kind") == "private" else "群友"
+                who = "管理员账户" if turn.get("kind") == "private" else "群友"
             else:
-                who = "糯糯"
+                who = "bot名称"
             text = _clean_text(str(turn.get("text") or ""), 120)
             if text:
                 lines.append(f"{who}: {text}")
@@ -3059,7 +3099,7 @@ class Main(star.Star):
         if not matched:
             return ""
         # 非向量路线：只读本地 knowledge.jsonl，不碰 kb_manager。
-        backend = str(self.cfg.get("knowledge_backend") or "auto").strip().lower()
+        backend = str(self.cfg.get("knowledge_backend") or "vector").strip().lower()
         if backend == "local":
             return self._knowledge_block(matched)
         kb_name = str(self.cfg.get("knowledge_kb_name") or "").strip()
@@ -3075,7 +3115,7 @@ class Main(star.Star):
                     getattr(kb.kb, "doc_count", 0)
                     or getattr(kb.kb, "chunk_count", 0)
                 ):
-                    # vector 模式不回本地；auto 模式才兜底。
+                    # vector 模式只认知识库；auto 模式才回本地。
                     return "" if backend == "vector" else self._knowledge_block(matched)
                 try:
                     result = await asyncio.wait_for(

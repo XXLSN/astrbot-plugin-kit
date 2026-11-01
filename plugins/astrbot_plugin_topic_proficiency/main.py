@@ -368,7 +368,7 @@ class Main(star.Star):
         if not self.cfg.get("kb_ingest_enabled", True):
             return
         # 非向量路线：知识卡留给 persona_growth/group_proactive 本地读取，不入库。
-        backend = str(self.cfg.get("knowledge_backend") or "auto").strip().lower()
+        backend = str(self.cfg.get("knowledge_backend") or "vector").strip().lower()
         if backend == "local":
             return
         kb_name = str(self.cfg.get("kb_name") or "").strip()

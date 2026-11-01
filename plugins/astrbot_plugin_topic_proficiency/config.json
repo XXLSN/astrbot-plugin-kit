@@ -7,7 +7,7 @@
   "knowledge_path": "",
   "knowledge_index": "",
   "kb_name": "",
-  "knowledge_backend": "local",
+  "knowledge_backend": "vector",
   "kb_ingest_enabled": true,
   "kb_ingest_batch": 10,
   "poll_interval_seconds": 300,

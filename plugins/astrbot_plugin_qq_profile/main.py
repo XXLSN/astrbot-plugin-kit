@@ -119,7 +119,7 @@ class Main(star.Star):
         images: str = "",
         visibility: str = "public",
     ) -> str:
-        """在机器人自己的 QQ 空间发布一条说说。仅管理员可用。发之前先自己确认内容，不要发敏感信息。
+        """在机器人自己的 QQ 空间发布一条说说。仅管理员可用；发之前先自己确认内容，不要发敏感信息，写不出来的话直接拒绝。
 
         Args:
             content(string): 说说正文。
@@ -127,8 +127,7 @@ class Main(star.Star):
             visibility(string): 可选，可见范围：public（公开，默认）、friends（好友可见）、private（仅自己可见）。
         """
         if not self._is_admin(event):
-            return "error: 只有管理员可以用机器人发说说。"
-
+            return "error: 只有管理员可以发说说。"
         body = str(content or "").strip()
         if not body:
             return "error: 说说内容不能为空。"

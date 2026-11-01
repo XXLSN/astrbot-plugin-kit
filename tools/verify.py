@@ -3,7 +3,7 @@
 
 用法：python tools/verify.py
 如需额外拦截自己的 QQ/群号等字符串，用环境变量传入（逗号分隔）：
-    set NUONUO_PRIVATE_STRINGS=123456789,987654321
+    set PLUGIN_KIT_PRIVATE_STRINGS=123456789,987654321
     python tools/verify.py
 """
 
@@ -29,7 +29,7 @@ BAD_PATTERNS = [
 ]
 EXTRA_BAD = [
     item.strip()
-    for item in os.environ.get("NUONUO_PRIVATE_STRINGS", "").split(",")
+    for item in os.environ.get("PLUGIN_KIT_PRIVATE_STRINGS", "").split(",")
     if item.strip()
 ]
 

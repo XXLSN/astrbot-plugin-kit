@@ -2,7 +2,26 @@
 
 这套插件让 AstrBot 里的 QQ 机器人具备一整套「自己长大」的行为：写日记、刷 B 站学说话、记长期记忆、在群里判断该不该接话、主动找话题、控制回复节奏、统计花费。
 
-原作者的机器人叫「糯糯」，所以代码里的默认名字、提示词、示例都是「糯糯」。你可以在安装时用 `--bot-name` 换成自己的名字。
+> **⚠️ 先读这段：包里有占位符，装完要替换**
+>
+> 本包已做隐私清洗，原作者的名字、管理员 QQ、群号、本机路径都换成了占位符：
+>
+> | 占位符 | 代表什么 | 出现在 |
+> |---|---|---|
+> | `bot名称` | 机器人名字（默认名、提示词、示例） | `plugins/` 源码与文档 |
+> | `管理员账户` | 机器人主人（管理员 QQ、称呼「管理员账户」） | 源码提示词、配置注释 |
+> | `示例群号` | 演示用的群号 | 文档示例 |
+> | `<你的数据目录>` / `<AstrBot安装目录>` | 本机绝对路径 | 文档 |
+>
+> **给 AI 的强制要求**：部署前必须问用户「机器人叫什么、你的管理员 QQ 是多少」，然后把 `plugins/` 里残留的 `bot名称` / `管理员账户` 换成用户真实的值（`tools/install.py --bot-name <名字>` 会批量做名字替换；QQ 填进 `admins_id` 和各插件 `config.json`）。**不要带着占位符直接上线。**
+
+> **⚡ 最省事的装法：把「压缩包 + 部署文档」丢给 AI**
+>
+> 下载整包 `astrbot-plugin-kit.zip` 后，**不用自己解压、不用自己改配置**——把 **压缩包** 和 **`部署文档.md`** 一起发给任意 AI 工具（Claude Code、Codex、Cursor、通义灵码、豆包……），说一句：
+>
+> > 按 `部署文档.md` 把这个插件包装到我的 AstrBot 上。
+>
+> AI 会先确认你的 QQ、AstrBot 数据目录和群号，再按文档装完、自检，并保持 `dry_run` 让你先观察。**只下单个插件也一样**：单个 zip + `部署文档.md` 一起给 AI 即可。
 
 ---
 
@@ -23,7 +42,16 @@
 
 依赖关系见 `docs/依赖关系.md`。不知道怎么选、哪些插件搭配效果更好，看 [`docs/插件简介与搭配推荐.md`](docs/插件简介与搭配推荐.md)。
 
-**知识检索默认走「非向量数据库路线」**：只读 `persona_growth` 生成的 `knowledge.jsonl`，不需要 embedding provider、Ollama 或 WebUI 知识库。要改回向量库，见 `部署文档.md` 第 6.3.1 节。
+**知识检索有两条路线，同一份代码同时支持，装之前先选一条（默认 A）：**
+
+| 路线 | 需要什么 | 适合 |
+|---|---|---|
+| **A. 向量知识库（默认）** | AstrBot 知识库 + 一个 embedding provider（本机 Ollama 或云端都行） | 想要语义检索，机器跑得动 embedding |
+| **B. 本地知识卡** | 什么都不用装。只读 `persona_growth` 生成的 `knowledge.jsonl`，用本地 BM25 关键词召回 | 不想装向量库 / 机器弱 / 没网 / 只想先跑起来 |
+
+> **⚡ 给 AI 的强制步骤：部署前先把这个问题问用户**——
+> 「你的 AstrBot 配好知识库和 embedding 了吗？要走向量库路线（A，默认推荐）还是本地知识卡路线（B）？」
+> 用户选完再往下走，**不要替他决定**。两条路线怎么切、各自怎么验收，见 `部署文档.md` 第 6.3 节。
 
 ---
 
@@ -48,6 +76,8 @@
 
 - [astrbot-plugin-kit.zip](https://github.com/XXLSN/astrbot-plugin-kit/releases/latest/download/astrbot-plugin-kit.zip)
 - [SHA256SUMS.txt](https://github.com/XXLSN/astrbot-plugin-kit/releases/latest/download/SHA256SUMS.txt)
+
+> **不想手动放文件？** 把单个插件 zip 和 `部署文档.md` 一起交给 AI 工具，让它帮你放进 `plugins/`、改好 `config.json`，再重载插件。
 
 下载单个插件后，解压到 AstrBot 数据目录的 `plugins/` 下，例如：
 
@@ -75,6 +105,8 @@
 
 ## 四、三步安装
 
+> **推荐直接交给 AI：** 整包 zip + `部署文档.md` 一起发给 AI 工具，它会按顺序装、跑自检、并告诉你还要在 WebUI 点什么。下面三步是手动安装，给想自己动手的人。
+
 先关掉 AstrBot（或至少不要在安装时重载插件），然后：
 
 ```bash
@@ -88,7 +120,7 @@ python tools/install.py --owner-qq <你的QQ> --group-ids <群号1,群号2>
 python tools/verify.py
 ```
 
-安装器会自动找到 `~/.astrbot/data`（Windows 是 `C:\Users\<你>\.astrbot\data`）。如果 AstrBot 装在别处，加 `--astrbot-data "<数据目录>"`。
+安装器会自动找到 `~/.astrbot/data`（Windows 是 `<你的数据目录>`）。如果 AstrBot 装在别处，加 `--astrbot-data "<数据目录>"`。
 
 安装完成后：
 
@@ -97,7 +129,7 @@ python tools/verify.py
 3. 在插件页重载，或重启 AstrBot。
 4. **先保持 `dry_run: true` 观察一两天**，确认日志里的判断没问题，再开启主动聊天。
 
-详细的逐步部署（包括每个 WebUI 选项、验收命令、报错处理）见 **`部署文档.md`**。这份文档可以直接整篇发给 AI，让它照着做。
+详细的逐步部署（包括每个 WebUI 选项、验收命令、报错处理）见 **`部署文档.md`**。**它本来就是写给 AI 的**：把压缩包和这份文档一起发给 AI 工具，比人自己照着做更稳。
 
 ---
 
@@ -136,7 +168,7 @@ python tools/apply_core_patches.py --astrbot-home "<AstrBot安装目录>" --rest
 ```
 astrbot-plugin-kit/
 ├── README.md                  ← 本文件
-├── 部署文档.md                ← 给 AI / 人看的完整部署步骤
+├── 部署文档.md                ← 给 AI 用的部署手册（和压缩包一起发给 AI 即可）
 ├── plugins/                   ← 10 个插件（只有 main.py / metadata.yaml / 脱敏 config.json）
 │   ├── astrbot_plugin_persona_growth/
 │   ├── astrbot_plugin_self_memory/
@@ -184,7 +216,7 @@ astrbot-plugin-kit/
 
 | 想知道什么 | 看哪里 |
 |---|---|
-| 怎么一步步装、怎么验收 | `部署文档.md` |
+| 怎么装、怎么验收（**直接把这份和压缩包发给 AI**） | `部署文档.md` |
 | 每个插件具体做什么 | `docs/插件说明.md` |
 | 插件怎么用、哪些搭配更好 | `docs/插件简介与搭配推荐.md` |
 | 某个配置项什么意思 | `docs/配置说明.md` |

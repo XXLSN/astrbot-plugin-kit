@@ -69,6 +69,16 @@ MARKDOWN_IMAGE_RE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
 SCOPE_RE = re.compile(r"^(global|(?:private|group|friend):\d+)$")
 MEMORY_CUE_RE = re.compile(r"记得|记不|上次|以前|之前|那次|说过|答应|忘了|回忆")
 
+# 记忆读隔离：非管理员（含群聊）永远看不到夹带管理员称呼、
+# 管理员 QQ、其他 QQ 号或隐私关键词的条目。
+ADMIN_WORD_RE = re.compile(r"管理员账户|管理员账户|爹|管理员|主人|admin", re.IGNORECASE)
+QQ_NUMBER_RE = re.compile(r"(?<!\d)\d{5,12}(?!\d)")
+PRIVACY_WORD_RE = re.compile(
+    r"电话|手机|住址|地址|单位|学校|行程|财务|密码|微信|身份证|银行卡"
+    r"|api[_\s-]?key|token|secret",
+    re.IGNORECASE,
+)
+
 STOP_TERMS = {
     "什么",
     "怎么",
@@ -209,6 +219,48 @@ class Main(star.Star):
             return []
         return [str(item).strip() for item in ids if str(item).strip()]
 
+    def _private_target_id(self, event: AstrMessageEvent) -> str:
+        """私聊看会话 id，不看 get_sender_id()。
+
+        主动任务里 get_sender_id() 可能是建任务的管理员，但会话目标是
+        普通好友；如果按发送人算，会把管理员账户的私聊记忆漏进好友的主动消息。
+        """
+        match = re.search(
+            r"(?:FriendMessage|private|friend):(\d+)",
+            str(getattr(event, "unified_msg_origin", "") or ""),
+            re.IGNORECASE,
+        )
+        if match:
+            return match.group(1)
+        try:
+            return str(event.get_sender_id() or "").strip()
+        except Exception:  # noqa: BLE001
+            return ""
+
+    def _is_admin_private_event(self, event: AstrMessageEvent) -> bool:
+        """只有「管理员本人私聊」才放开全部记忆；群聊一律按公开处理。"""
+        try:
+            if not event.is_private_chat():
+                return False
+        except Exception:  # noqa: BLE001
+            return False
+        target = self._private_target_id(event)
+        return bool(target) and target in self._admin_ids()
+
+    def _safe_for_non_admin(self, text: str) -> bool:
+        raw = str(text or "")
+        if not raw:
+            return True
+        if ADMIN_WORD_RE.search(raw):
+            return False
+        if any(uid and uid in raw for uid in self._admin_ids()):
+            return False
+        if QQ_NUMBER_RE.search(raw):
+            return False
+        if PRIVACY_WORD_RE.search(raw):
+            return False
+        return True
+
     @staticmethod
     def _clean_memory_text(text: str) -> str:
         """去掉图片占位符和图片链接，只留下文字事实。"""
@@ -259,14 +311,8 @@ class Main(star.Star):
     def _current_scope(self, event: AstrMessageEvent) -> str:
         try:
             if event.is_private_chat():
-                sender = str(event.get_sender_id() or "").strip()
-                if not sender:
-                    match = re.search(
-                        r"FriendMessage:(\d+)",
-                        str(getattr(event, "unified_msg_origin", "") or ""),
-                    )
-                    sender = match.group(1) if match else ""
-                return f"private:{sender}" if sender else "global"
+                target = self._private_target_id(event)
+                return f"private:{target}" if target else "global"
             umo = str(getattr(event, "unified_msg_origin", "") or "")
             match = re.search(r"GroupMessage:(\d+)", umo)
             if match:
@@ -281,9 +327,9 @@ class Main(star.Star):
         return not scope or scope == "global" or scope == current
 
     def _infer_legacy_scope(self, text: str) -> str:
-        """老记忆没有 scope 时按内容补：提到爸的默认只给爸私聊看。"""
+        """老记忆没有 scope 时按内容补：提到管理员账户的默认只给管理员账户私聊看。"""
         low = str(text or "").casefold()
-        if any(word in low for word in ("爸", "爹", "管理员", "admin")):
+        if any(word in low for word in ("管理员账户", "爹", "管理员", "admin")):
             ids = self._admin_ids()
             if ids:
                 return f"private:{ids[0]}"
@@ -406,14 +452,15 @@ class Main(star.Star):
 
     def _diary_visible(self, item: dict[str, Any], event: AstrMessageEvent) -> bool:
         scope = str(item.get("scope") or "web")
+        if self._is_admin_private_event(event):
+            return True
+        # 群聊和普通好友私聊都只能看「不含管理员/隐私」的日记。
+        # 以前群聊直接放行 web/group 日记，导致一堆提到「管理员账户」的日记被
+        # 注入到公开群里；这里先过内容闸门，再看作用域。
+        if not self._safe_for_non_admin(str(item.get("text") or "")):
+            return False
         try:
             if event.is_private_chat():
-                if self._is_admin(event):
-                    return True
-                blocked = ["爸", "爹", "管理员", "admin"] + self._admin_ids()
-                low = str(item.get("text") or "").casefold()
-                if any(word and word.casefold() in low for word in blocked):
-                    return False
                 return scope == "web"
         except Exception:  # noqa: BLE001
             pass
@@ -423,18 +470,28 @@ class Main(star.Star):
 
     def _visible_notes(self, event: AstrMessageEvent) -> list[dict[str, Any]]:
         current = self._current_scope(event)
+        admin_private = self._is_admin_private_event(event)
         return [
             note
             for note in self._load_notes()
             if self._scope_visible(str(note.get("scope") or ""), current)
+            and (
+                admin_private
+                or self._safe_for_non_admin(str(note.get("text") or ""))
+            )
         ]
 
     def _visible_key_facts(self, event: AstrMessageEvent) -> list[dict[str, Any]]:
         current = self._current_scope(event)
+        admin_private = self._is_admin_private_event(event)
         return [
             fact
             for fact in self._load_key_facts()
             if self._scope_visible(str(fact.get("scope") or ""), current)
+            and (
+                admin_private
+                or self._safe_for_non_admin(str(fact.get("text") or ""))
+            )
         ]
 
     @staticmethod
@@ -829,7 +886,7 @@ class Main(star.Star):
         importance: int,
         scope: str,
     ) -> str:
-        """把一件值得长期记住的事写进长期记忆，清空上下文或重启后仍然记得。仅管理员可用。遇到爸的偏好、忌讳、约定、重要日期、近况等以后还会用到的信息时，主动调用本工具，不要等用户提醒。只记文字事实：不要记图片、表情包、截图或对图片的描述，也不要记图片链接；用户只发图片时不要调用本工具。
+        """把一件值得长期记住的事写进长期记忆，清空上下文或重启后仍然记得。仅管理员可用。遇到管理员账户的偏好、忌讳、约定、重要日期、近况等以后还会用到的信息时，主动调用本工具，不要等用户提醒。只记文字事实：不要记图片、表情包、截图或对图片的描述，也不要记图片链接；用户只发图片时不要调用本工具。
 
         Args:
             text(string): 要记住的事，一句话说清楚，不超过 400 字。不要记密码、API Key、身份证号等敏感信息。
@@ -1080,7 +1137,7 @@ class Main(star.Star):
                     TextPart(
                         text="【记忆提示】长期记忆文件里没搜到这段。"
                         "如果用户指的是更早的聊天，可以用 search_history 翻当前会话的完整旧记录。"
-                    )
+                    ).mark_as_temp()
                 )
             return
         text = self._format_recall(items)
@@ -1090,7 +1147,7 @@ class Main(star.Star):
             return
         if getattr(req, "extra_user_content_parts", None) is None:
             req.extra_user_content_parts = []
-        req.extra_user_content_parts.append(TextPart(text=text))
+        req.extra_user_content_parts.append(TextPart(text=text).mark_as_temp())
 
     # ---------- 延迟清空 ----------
 

@@ -3,7 +3,7 @@
 
 用法示例：
     python tools/install.py --owner-qq 123456789 --group-ids 111111,222222
-    python tools/install.py --astrbot-data "C:/Users/me/.astrbot/data" --owner-qq 123456789
+    python tools/install.py --astrbot-data "<你的数据目录>" --owner-qq 123456789
 
 它做三件事：
 1. 把 plugins/ 下的插件目录复制到 <AstrBot数据目录>/plugins/
@@ -39,18 +39,10 @@ ALL_PLUGINS = [
     "astrbot_plugin_usage_cost",
 ]
 
-NAME_VARIANTS = [
-    "糯叽叽",
-    "小糯米",
-    "糯糯酱",
-    "糯糯",
-    "小糯",
-    "糯酱",
-    "糯宝",
-    "阿糯",
-    "糯米",
-    "糯团",
-]
+# 包内做了隐私清洗，机器人名字统一写成了占位符「bot名称」。
+# 安装时把它换成用户自己的名字；对主人的称呼占位符是「管理员账户」。
+BOT_PLACEHOLDER = "bot名称"
+ADMIN_PLACEHOLDER = "管理员账户"
 
 
 def default_data_dir() -> Path:
@@ -101,10 +93,13 @@ def copy_plugins(selected: list[str], plugin_dir: Path, force: bool, dry: bool) 
         # 包内已经排除了 config.json.bak / diary.json / state.json / msgs 等。
 
 
-def rename_names(plugin_dir: Path, selected: list[str], bot_name: str, dry: bool) -> None:
-    """把代码/元数据里的默认名字换成使用者自己的。只在 bot_name 不是「糯糯」时执行。"""
+def rename_names(
+    plugin_dir: Path, selected: list[str], bot_name: str, admin_title: str, dry: bool
+) -> None:
+    """把占位符「bot名称」「管理员账户」换成使用者自己的叫法。"""
     bot_name = (bot_name or "").strip()
-    if not bot_name or bot_name == "糯糯":
+    admin_title = (admin_title or "").strip()
+    if not bot_name and not admin_title:
         return
     for name in selected:
         d = plugin_dir / name
@@ -116,12 +111,10 @@ def rename_names(plugin_dir: Path, selected: list[str], bot_name: str, dry: bool
             except Exception:  # noqa: BLE001
                 continue
             new = text
-            # 长的先换，并用占位符隔开，避免新名字里又含旧名字导致二次替换
-            # （例如把「糯糯」换成「小糯米」时，不会再把「糯米」换一遍）。
-            token = "\x00BOT_NAME\x00"
-            for variant in NAME_VARIANTS:
-                new = new.replace(variant, token)
-            new = new.replace(token, bot_name)
+            if bot_name:
+                new = new.replace(BOT_PLACEHOLDER, bot_name)
+            if admin_title:
+                new = new.replace(ADMIN_PLACEHOLDER, admin_title)
             if new != text and not dry:
                 path.write_text(new, encoding="utf-8")
                 print(f"[改名] {path.relative_to(plugin_dir)}")
@@ -138,6 +131,7 @@ def build_configs(
     mention_keywords: list[str],
     provider_id: str,
     kb_name: str,
+    knowledge: str,
     enable_proactive: bool,
     dry: bool,
 ) -> None:
@@ -184,7 +178,7 @@ def build_configs(
             put("interest_proficiency_path", str(proficiency))
             if kb_name:
                 put("interest_kb_name", kb_name)
-                put("knowledge_backend", "auto")
+            put("knowledge_backend", knowledge)
             put("dry_run", not enable_proactive)
         elif name == "astrbot_plugin_persona_growth":
             put("data_dir", str(pg))
@@ -194,7 +188,7 @@ def build_configs(
                 put("provider_id", provider_id)
             if kb_name:
                 put("knowledge_kb_name", kb_name)
-                put("knowledge_backend", "auto")
+            put("knowledge_backend", knowledge)
             put("mood_mention_keywords", mention_keywords)
         elif name == "astrbot_plugin_self_memory":
             put("data_dir", str(sm))
@@ -214,7 +208,7 @@ def build_configs(
             put("knowledge_path", str(pg / "knowledge.jsonl"))
             if kb_name:
                 put("kb_name", kb_name)
-                put("knowledge_backend", "auto")
+            put("knowledge_backend", knowledge)
 
         if changed:
             print(f"[配置] {name}/config.json")
@@ -252,9 +246,12 @@ def main() -> int:
     ap.add_argument("--admin-ids", default="", help="额外管理员 QQ，逗号分隔")
     ap.add_argument("--group-ids", default="", help="允许主动聊天的群号，逗号分隔；留空=不主动进群")
     ap.add_argument("--mention-keywords", default="", help="机器人名字/昵称，逗号分隔；默认用 --bot-name")
-    ap.add_argument("--bot-name", default="糯糯", help="机器人名字（会替换插件里的默认名），默认 糯糯")
+    ap.add_argument("--bot-name", default="", help="机器人名字（替换源码里的「bot名称」占位符），必填")
+    ap.add_argument("--admin-title", default="", help="机器人对主人的称呼（替换「管理员账户」占位符），留空=保持原样")
     ap.add_argument("--provider-id", default="", help="写日记/打分用的模型 ID；留空=用默认模型")
-    ap.add_argument("--kb-name", default="", help="AstrBot 知识库名称；留空=不使用知识库")
+    ap.add_argument("--kb-name", default="", help="AstrBot 知识库名称；只有走向量库路线时才需要")
+    ap.add_argument("--knowledge", choices=("vector", "local"), default="vector",
+                    help="知识路线：vector=向量知识库（默认）；local=本地知识卡，不接向量库")
     ap.add_argument("--enable-proactive", action="store_true",
                     help="安装完立即开启群聊主动聊天（默认 dry_run，不主动发言）")
     ap.add_argument("--plugins", default="", help="只装这些插件，逗号分隔")
@@ -281,16 +278,19 @@ def main() -> int:
     owner_qq = str(args.owner_qq or "").strip()
     admin_ids = parse_list(args.admin_ids)
     group_ids = parse_list(args.group_ids)
-    bot_name = str(args.bot_name or "").strip() or "糯糯"
-    keywords = parse_list(args.mention_keywords)
-    if not keywords:
-        keywords = list(NAME_VARIANTS) if bot_name == "糯糯" else [bot_name]
+    bot_name = str(args.bot_name or "").strip()
+    admin_title = str(args.admin_title or "").strip()
+    if not bot_name:
+        print("[错误] 必须给 --bot-name（包内机器人名字是占位符「bot名称」）。")
+        return 1
+    keywords = parse_list(args.mention_keywords) or [bot_name]
 
     print("=" * 60)
     print("AstrBot 数据目录：", data_dir)
     print("插件目录：        ", plugin_dir)
     print("要安装的插件：    ", ", ".join(selected))
     print("机器人名字：      ", bot_name)
+    print("知识路线：        ", "A 向量知识库" if args.knowledge == "vector" else "B 本地知识卡")
     print("主人 QQ：         ", owner_qq or "（未填，稍后请在 WebUI 设置 admins_id）")
     print("群号：            ", ", ".join(group_ids) or "（空，不会主动进群）")
     print("主动聊天：        ", "安装后开启" if args.enable_proactive else "dry_run（只记录不发言）")
@@ -307,7 +307,7 @@ def main() -> int:
 
     if not args.reconfigure:
         copy_plugins(selected, plugin_dir, args.force, args.dry_run)
-        rename_names(plugin_dir, selected, bot_name, args.dry_run)
+        rename_names(plugin_dir, selected, bot_name, admin_title, args.dry_run)
 
     build_configs(
         selected,
@@ -319,6 +319,7 @@ def main() -> int:
         mention_keywords=keywords,
         provider_id=str(args.provider_id or "").strip(),
         kb_name=str(args.kb_name or "").strip(),
+        knowledge=args.knowledge,
         enable_proactive=args.enable_proactive,
         dry=args.dry_run,
     )
