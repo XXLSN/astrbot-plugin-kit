@@ -92,6 +92,7 @@
   "private_escalation_cap": 0.5,
   "private_escalation_delay_seconds": 60,
   "private_escalation_ttl_minutes": 360,
+  "private_friend_only": true,
   "private_friends_enabled": false,
   "private_friend_trigger_minutes": 60,
   "private_friend_daily_limit": 3,

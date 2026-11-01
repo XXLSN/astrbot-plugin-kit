@@ -410,6 +410,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "private_escalation_cap": 0.5,
     "private_escalation_delay_seconds": 60,
     "private_escalation_ttl_minutes": 360,
+    # 只跟好友私聊：不在好友列表里的人发来私聊，本地直接丢掉，
+    # 既不回也不会有后续主动。好友名单读不到时放行，免得把真好友弄哑。
+    "private_friend_only": True,
     "private_friends_enabled": False,
     "private_friend_trigger_minutes": 60,
     "private_friend_daily_limit": 3,
@@ -5524,6 +5527,43 @@ class Main(star.Star):
         )
 
     @filter.on_waiting_llm_request()
+    async def enforce_friend_only_private(self, event: AstrMessageEvent) -> None:
+        """陌生人发来的私聊在本地丢掉：不进模型、不发请求、不进上下文。
+
+        好友名单来自 NapCat 的 get_friend_list，`_ensure_friend_roster`
+        已经做了 6 小时缓存和失败后 30 分钟重试。名单从来没读成功过的时候
+        一律放行——宁可偶尔回一次陌生人，也不能把真好友弄成哑巴。
+        """
+        if not self.cfg.get("private_friend_only", True):
+            return
+        if event.get_extra("cron_job") is not None:
+            # 主动任务本来只发给管理员账户和好友，不用再过这道门。
+            return
+        try:
+            if not event.is_private_chat():
+                return
+            uid = str(event.get_sender_id() or "")
+        except Exception:  # noqa: BLE001
+            return
+        if not uid:
+            return
+        if uid in self._protected_admin_ids():
+            return
+        platform = self._get_platform_for_event(event)
+        if platform is None:
+            return
+        await self._ensure_friend_roster(platform)
+        if not getattr(self, "_friend_roster_done", False):
+            logger.info("好友名单不可用，非好友拦截放行：%s", uid)
+            return
+        if uid in getattr(self, "_friend_uids", set()):
+            return
+        event.stop_event()
+        logger.info(
+            "非好友私聊：%s 不在好友列表，本地丢弃，不发请求", uid
+        )
+
+    @filter.on_waiting_llm_request()
     async def enforce_private_mute(self, event: AstrMessageEvent) -> None:
         """私聊里被要求闭嘴后，静默期内不回这条会话。
 
@@ -8389,6 +8429,14 @@ class Main(star.Star):
         except Exception:  # noqa: BLE001
             return
         if not uid:
+            return
+        # 非好友连图都不下——名单已加载过就直接按缓存刷掉，不额外发请求。
+        if (
+            self.cfg.get("private_friend_only", True)
+            and getattr(self, "_friend_roster_done", False)
+            and uid not in getattr(self, "_friend_uids", set())
+            and uid not in self._protected_admin_ids()
+        ):
             return
         try:
             comps = [
