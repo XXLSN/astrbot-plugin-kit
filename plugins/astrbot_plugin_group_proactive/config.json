@@ -67,7 +67,7 @@
   "mention_keywords": [],
   "mention_cooldown_minutes": 2,
   "reply_at_enabled": true,
-  "reply_at_min_gap": 10,
+  "reply_at_min_gap": 8,
   "reply_at_roster_size": 8,
   "require_history": true,
   "backlog_enabled": true,

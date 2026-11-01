@@ -389,7 +389,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     # 本地知识卡路径；留空自动指向 persona_growth 数据目录下的 knowledge.jsonl。
     "local_knowledge_path": "",
     "reply_at_enabled": True,
-    "reply_at_min_gap": 10,
+    # 引用门槛：要回的那条消息后面隔了几条（自己的消息也算）。
+    "reply_at_min_gap": 8,
     "reply_at_roster_size": 8,
     "require_history": True,
     "backlog_enabled": True,
@@ -4511,7 +4512,7 @@ class Main(star.Star):
         if not people:
             return ""
         size = self._cfg_int("reply_at_roster_size", 8, 1, 20)
-        gap = self._cfg_int("reply_at_min_gap", 10, 1, 100)
+        gap = self._cfg_int("reply_at_min_gap", 8, 1, 100)
         roster = "，".join(f"{name}={uid}" for uid, name in list(people.items())[-size:])
         return (
             f"近期发言的人（昵称=QQ）：{roster}\n"
@@ -5122,9 +5123,18 @@ class Main(star.Star):
         if target not in ids:
             # 查不到就只有两种可能：id 抄错了，或者那条已经比最近 100 条还旧。
             # 两种都别引用——引用一个不存在的 id 会让整条消息发不出去。
+            logger.info(
+                "引用判断：群 %s 目标 %s 不在最近 %d 条历史里 → 不引用",
+                gid, target, len(ids),
+            )
             return False
         gap = len(ids) - 1 - ids.index(target)
-        return gap >= self._cfg_int("reply_at_min_gap", 10, 1, 100)
+        need = self._cfg_int("reply_at_min_gap", 8, 1, 100)
+        logger.info(
+            "引用判断：群 %s 目标 %s 后面隔了 %d 条（门槛 %d）→ %s",
+            gid, target, gap, need, "引用" if gap >= need else "不引用",
+        )
+        return gap >= need
 
     @filter.on_using_llm_tool()
     async def prepare_group_quote(
@@ -5193,6 +5203,7 @@ class Main(star.Star):
                 )
             ]
             messages.insert(0, {"type": "reply", "message_id": target})
+            logger.info("主动发送：已对消息 %s 加引用（群 %s）", target, gid)
 
     @staticmethod
     def _trigger_message_id(event: AstrMessageEvent) -> str:
@@ -5275,6 +5286,7 @@ class Main(star.Star):
         if not await self._quote_allowed(platform, gid, trigger):
             return
         chain.insert(0, Reply(id=trigger))
+        logger.info("被动回复：已对原消息 %s 加引用（群 %s）", trigger, gid)
 
     @staticmethod
     def _strip_narration_prefix(text: str) -> tuple[str, bool]:
